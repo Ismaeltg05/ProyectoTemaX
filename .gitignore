@@ -1,3 +1,6 @@
 dataset_raw/
 *.tar.gz
 dataset/
+dataset_*/
+artifacts_*/
+training*.log
