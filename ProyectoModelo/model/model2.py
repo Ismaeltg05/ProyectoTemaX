@@ -459,6 +459,50 @@ def predict_image(model_path: Path, classes_path: Path, image_path: Path):
     print(f"PredicciÃ³n: {predicted_class} (confianza: {confidence.item():.4f})")
 
 
+def export_model(
+    model_path: Path,
+    classes_path: Path,
+    output_path: Path | None,
+    export_format: str = "torchscript",
+    opset: int = 17,
+):
+    device = torch.device("cpu")
+    model, classes = load_model(model_path, classes_path, device)
+    model.eval()
+
+    if output_path is None:
+        default_name = "food_classifier.torchscript.pt" if export_format == "torchscript" else "food_classifier.onnx"
+        output_path = model_path.parent / default_name
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    dummy_input = torch.randn(1, 3, IMAGE_SIZE, IMAGE_SIZE, device=device)
+
+    if export_format == "torchscript":
+        traced_model = torch.jit.trace(model, dummy_input)
+        traced_model.save(str(output_path))
+    elif export_format == "onnx":
+        torch.onnx.export(
+            model,
+            dummy_input,
+            str(output_path),
+            input_names=["input"],
+            output_names=["logits"],
+            dynamic_axes={"input": {0: "batch_size"}, "logits": {0: "batch_size"}},
+            opset_version=opset,
+            do_constant_folding=True,
+        )
+    else:
+        raise ValueError(f"Formato de exportacion no soportado: {export_format}")
+
+    exported_classes_path = output_path.with_name(f"{output_path.stem}_classes.json")
+    with exported_classes_path.open("w", encoding="utf-8") as file:
+        json.dump(classes, file, ensure_ascii=False, indent=2)
+
+    print(f"Modelo exportado en: {output_path}")
+    print(f"Clases exportadas en: {exported_classes_path}")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Modelo de clasificacion de imagenes de alimentos")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -493,6 +537,13 @@ def parse_args():
     summary_parser.add_argument("--data-dir", type=Path, default=None, help="Ruta al dataset para inferir num clases")
     summary_parser.add_argument("--num-classes", type=int, default=None, help="Numero de clases si no usas data-dir")
 
+    export_parser = subparsers.add_parser("export", help="Exporta el modelo entrenado")
+    export_parser.add_argument("--model-path", required=True, type=Path)
+    export_parser.add_argument("--classes-path", required=True, type=Path)
+    export_parser.add_argument("--output-path", type=Path, default=None)
+    export_parser.add_argument("--format", choices=["torchscript", "onnx"], default="torchscript")
+    export_parser.add_argument("--opset", type=int, default=17, help="ONNX opset version")
+
     return parser.parse_args()
 
 
@@ -524,6 +575,14 @@ def main():
         )
     elif args.command == "summary":
         print_model_summary(data_dir=args.data_dir, num_classes=args.num_classes)
+    elif args.command == "export":
+        export_model(
+            model_path=args.model_path,
+            classes_path=args.classes_path,
+            output_path=args.output_path,
+            export_format=args.format,
+            opset=args.opset,
+        )
 
 
 if __name__ == "__main__":
