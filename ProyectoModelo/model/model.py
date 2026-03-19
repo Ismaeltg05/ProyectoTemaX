@@ -123,8 +123,11 @@ def train_model(dataset_root: Path, output_dir: Path, epochs: int = 10, batch_si
 		running_loss = 0.0
 		correct = 0
 		total = 0
+		steps_per_epoch = len(train_loader)
 
-		for images, labels in train_loader:
+		print(f"Iniciando epoch {epoch + 1}/{epochs}...", flush=True)
+
+		for step, (images, labels) in enumerate(train_loader, start=1):
 			images = images.to(device)
 			labels = labels.to(device)
 
@@ -139,6 +142,14 @@ def train_model(dataset_root: Path, output_dir: Path, epochs: int = 10, batch_si
 			correct += (preds == labels).sum().item()
 			total += labels.size(0)
 
+			if step % 20 == 0 or step == steps_per_epoch:
+				batch_acc = correct / total if total > 0 else 0.0
+				print(
+					f"  Batch {step}/{steps_per_epoch} | "
+					f"loss: {loss.item():.4f} acc_acum: {batch_acc:.4f}",
+					flush=True,
+				)
+
 		train_loss = running_loss / total if total > 0 else 0.0
 		train_acc = correct / total if total > 0 else 0.0
 
@@ -147,7 +158,8 @@ def train_model(dataset_root: Path, output_dir: Path, epochs: int = 10, batch_si
 		print(
 			f"Epoch {epoch + 1}/{epochs} | "
 			f"train_loss: {train_loss:.4f} train_acc: {train_acc:.4f} | "
-			f"val_loss: {val_loss:.4f} val_acc: {val_acc:.4f}"
+			f"val_loss: {val_loss:.4f} val_acc: {val_acc:.4f}",
+			flush=True,
 		)
 
 		if val_acc > best_val_acc:
