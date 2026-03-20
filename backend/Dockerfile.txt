@@ -2,11 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Dependencias del sistema (Pillow)
+# Dependencias del sistema (Pillow y librerías necesarias)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62-turbo-dev zlib1g-dev \
-  && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
+# Instalación de dependencias de Python
+# Nota: Asegúrate de que fastapi, uvicorn y python-multipart estén en tu requirements.txt
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -14,4 +16,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 8000
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

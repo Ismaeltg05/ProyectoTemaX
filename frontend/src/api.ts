@@ -22,8 +22,26 @@ export type MultiPredictResponse = {
   errors: MultiPredictError[];
 };
 
+function normalizeBaseUrl(url: string) {
+  const trimmed = url.trim().replace(/\/+$/, "");
+
+  // Permite "/api" (proxy) o "http://localhost:8000"
+  if (trimmed.startsWith("/")) return trimmed;
+
+  // Si viene sin http/https (ej: "backend:8000"), lo convertimos a http://...
+  if (!/^https?:\/\//i.test(trimmed)) return `http://${trimmed}`;
+
+  return trimmed;
+}
+
+/**
+ * En contenedores: usa proxy nginx -> backend mediante "/api"
+ * Puedes sobreescribir con VITE_API_BASE_URL (ej: "/api" o "http://localhost:8000")
+ */
 export function getApiBaseUrl() {
-  return (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, "") || "http://localhost:8000";
+  const env = import.meta.env.VITE_API_BASE_URL as string | undefined;
+  if (env && env.trim().length > 0) return normalizeBaseUrl(env);
+  return "/api";
 }
 
 async function parseJsonSafe(res: Response) {
