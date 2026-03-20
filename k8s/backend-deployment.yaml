@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: TUUSER/proyectotemax-backend:1.0
+          image: ismaeltg/proyectotemax-backend:1.4
           ports:
             - containerPort: 8000
           readinessProbe:
@@ -24,9 +24,11 @@ spec:
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 20
+            failureThreshold: 6

@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: TUUSER/proyectotemax-frontend:1.0
+          image: ismaeltg05/proyectotemax-frontend:1.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           readinessProbe:
@@ -24,9 +25,11 @@ spec:
               port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /
               port: 80
             initialDelaySeconds: 15
             periodSeconds: 20
+            failureThreshold: 6
