@@ -78,6 +78,7 @@ def create_dataloaders(dataset_root: Path, batch_size: int = 32):
 
     return train_loader, val_loader, test_loader, train_dataset.classes
 
+
 def create_model(num_classes: int) -> nn.Module:
     # EfficientNet-B1 da un mejor equilibrio entre capacidad y generalizacion.
     model = models.efficientnet_b1(weights=models.EfficientNet_B1_Weights.DEFAULT)
@@ -87,7 +88,6 @@ def create_model(num_classes: int) -> nn.Module:
         param.requires_grad = False
 
     # Etapa inicial: solo el head (sin backbone) para estabilizar el arranque.
-
     in_features = model.classifier[1].in_features
 
     # Head compacto para limitar memorizacion.
@@ -220,16 +220,15 @@ def train_model(
         min_lr=lr * 0.02,
     )
 
-    # Arranca en -1 para asegurar guardado del primer epoch y evitar falta de checkpoint.
+    # --- Checkpointing estilo Keras ModelCheckpoint ---
+    # monitor = val_accuracy (val_acc) ; mode = "max"
     best_val_acc = -1.0
-    best_val_loss = float("inf")
     epochs_without_improvement = 0
-    min_delta_acc = 1e-4
-    min_delta_loss = 5e-4
-    acc_tolerance_for_loss_save = 0.002
-    
-    best_model_path = output_dir / "food_classifier.pth"
+
+    best_model_path = output_dir / "food_classifier.pth"   # BEST (save_best_only)
+    last_model_path = output_dir / "last_model.pth"        # LAST (cada epoch)
     classes_path = output_dir / "classes.json"
+
     stage1_unfreeze_done = False
     stage2_unfreeze_done = False
     overfit_streak = 0
@@ -317,8 +316,8 @@ def train_model(
                 batch_acc = correct / total if total > 0 else 0.0
                 print(f"   Batch {step}/{steps_per_epoch} | loss: {loss.item():.4f} acc_acum: {batch_acc:.4f}", flush=True)
 
-        train_loss = running_loss / total
-        train_acc = correct / total
+        train_loss = running_loss / total if total > 0 else 0.0
+        train_acc = correct / total if total > 0 else 0.0
 
         # Evaluacion en validacion.
         val_loss, val_acc = evaluate(ema_model, val_loader, criterion, device)
@@ -333,6 +332,19 @@ def train_model(
             f"\nLR(backbone/head): {current_backbone_lr:.6f} / {current_head_lr:.6f}",
             flush=True,
         )
+
+        # Guardar ALWAYS el "last"
+        torch.save(ema_model.state_dict(), last_model_path)
+
+        # Guardar BEST solo si mejora val_acc (monitor="val_accuracy", mode="max", save_best_only=True)
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            epochs_without_improvement = 0
+            torch.save(ema_model.state_dict(), best_model_path)
+            print(f"Nuevo mejor checkpoint guardado (best_val_acc: {best_val_acc:.4f}).", flush=True)
+        else:
+            epochs_without_improvement += 1
+            print(f"Sin mejora en val_acc por {epochs_without_improvement} epoca(s). (best_val_acc: {best_val_acc:.4f})", flush=True)
 
         # Guardia anti-overfitting: si train_loss baja mientras val_loss sube de forma consistente,
         # contamos una racha y reducimos LR cuando sea necesario.
@@ -356,30 +368,6 @@ def train_model(
         prev_train_loss = train_loss
         prev_val_loss = val_loss
 
-        improved_acc = val_acc > (best_val_acc + min_delta_acc)
-        improved_loss_without_hurting_acc = (
-            val_acc >= (best_val_acc - acc_tolerance_for_loss_save)
-            and val_loss < (best_val_loss - min_delta_loss)
-        )
-        improved = improved_acc or improved_loss_without_hurting_acc
-
-        # Early stopping por mejora conjunta de accuracy/loss de validacion.
-        if improved:
-            best_val_acc = max(best_val_acc, val_acc)
-            best_val_loss = min(best_val_loss, val_loss)
-            epochs_without_improvement = 0
-            torch.save(ema_model.state_dict(), best_model_path)
-            print(
-                f"Nuevo mejor checkpoint guardado (best_val_acc: {best_val_acc:.4f}, "
-                f"best_val_loss: {best_val_loss:.4f})."
-            )
-        else:
-            epochs_without_improvement += 1
-            print(
-                f"Sin mejora util en validacion por {epochs_without_improvement} epoca(s). "
-                f"(best_val_acc: {best_val_acc:.4f}, best_val_loss: {best_val_loss:.4f})"
-            )
-
         if early_stopping_enabled and epochs_without_improvement >= patience:
             print(f"\nEarly stopping: no mejora de val_acc en {patience} epocas.")
             break
@@ -401,6 +389,7 @@ def train_model(
 
     print(f"\nEntrenamiento finalizado.")
     print(f"Test loss: {test_loss:.4f} | Test acc: {test_acc:.4f}")
+
 
 def load_model(model_path: Path, classes_path: Path, device: torch.device):
     with classes_path.open("r", encoding="utf-8") as file:
@@ -587,4 +576,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
