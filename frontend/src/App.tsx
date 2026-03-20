@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import {
   getApiBaseUrl,
+  healthCheck,
   multipredict,
   predict,
   type MultiPredictResponse,

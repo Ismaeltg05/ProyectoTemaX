@@ -1,8 +1,11 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from PIL import Image
+import io
 import torch
 from typing import List, Dict, Any
+
 from ProyectoModelo.model.model2 import load_model, build_transforms, get_device
 
 # Inicializar FastAPI
@@ -12,9 +15,23 @@ app = FastAPI(
     version="1.0",
 )
 
-# Rutas de los archivos del modelo
-MODEL_PATH = Path("./artifacts/food_classifier.pth")
-CLASSES_PATH = Path("./artifacts/classes.json")
+# CORS (para que el frontend en Vite pueda llamar a la API en dev)
+# En producción, limita allow_origins a tu dominio real.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Rutas del modelo (robustas: relativas a este archivo)
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = (BASE_DIR / "artifacts" / "food_classifier.pth").resolve()
+CLASSES_PATH = (BASE_DIR / "artifacts" / "classes.json").resolve()
 
 # Cargar el modelo y las clases
 device = get_device()
@@ -41,6 +58,15 @@ def _predict_pil_image(image: Image.Image) -> Dict[str, Any]:
     }
 
 
+@app.get("/", summary="Verifica el estado de la API (health check)")
+def root():
+    return {
+        "message": "API de clasificación de alimentos está activa.",
+        "device": str(device),
+        "model_loaded": True,
+    }
+
+
 @app.post("/predict", summary="Realiza una predicción de la clase de alimento")
 async def predict_image(file: UploadFile = File(...)):
     """
@@ -50,7 +76,8 @@ async def predict_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="El archivo subido no es una imagen válida.")
 
     try:
-        image = Image.open(file.file).convert("RGB")
+        raw = await file.read()
+        image = Image.open(io.BytesIO(raw)).convert("RGB")
         return _predict_pil_image(image)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar la imagen: {e}")
@@ -68,8 +95,8 @@ async def multipredict(files: List[UploadFile] = File(...)):
     if not files:
         raise HTTPException(status_code=400, detail="Debes enviar al menos un archivo.")
 
-    results = []
-    errors = []
+    results: List[Dict[str, Any]] = []
+    errors: List[Dict[str, Any]] = []
 
     for idx, file in enumerate(files):
         filename = file.filename or f"file_{idx}"
@@ -84,7 +111,8 @@ async def multipredict(files: List[UploadFile] = File(...)):
             continue
 
         try:
-            image = Image.open(file.file).convert("RGB")
+            raw = await file.read()
+            image = Image.open(io.BytesIO(raw)).convert("RGB")
             pred = _predict_pil_image(image)
             results.append(
                 {
@@ -100,7 +128,7 @@ async def multipredict(files: List[UploadFile] = File(...)):
                 }
             )
 
-    # Si todas fallan, puedes optar por devolver 400/422; aquí devolvemos 200 con errores
+    # Devolvemos 200 aunque haya errores parciales
     return {
         "count": len(files),
         "success": len(results),
@@ -108,8 +136,3 @@ async def multipredict(files: List[UploadFile] = File(...)):
         "results": results,
         "errors": errors,
     }
-
-
-@app.get("/", summary="Verifica el estado de la API")
-def root():
-    return {"message": "API de clasificación de alimentos está activa."}

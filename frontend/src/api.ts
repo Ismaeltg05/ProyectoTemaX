@@ -27,7 +27,22 @@ export function getApiBaseUrl() {
 }
 
 async function parseJsonSafe(res: Response) {
-  try { return await res.json(); } catch { return null; }
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function healthCheck() {
+  const res = await fetch(`${getApiBaseUrl()}/`, { method: "GET" });
+  const data = await parseJsonSafe(res);
+
+  if (!res.ok) {
+    throw new Error(`Health check failed: ${res.status} ${JSON.stringify(data)}`);
+  }
+
+  return data;
 }
 
 export async function predict(file: File): Promise<PredictResponse> {
