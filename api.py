@@ -16,7 +16,6 @@ app = FastAPI(
 )
 
 # CORS (para que el frontend en Vite pueda llamar a la API en dev)
-# En producción, limita allow_origins a tu dominio real.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

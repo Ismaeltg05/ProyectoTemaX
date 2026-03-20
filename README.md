@@ -1,5 +1,82 @@
 # ProyectoTemaX
 
+## Descripción general
+
+ProyectoTemaX es una aplicación que utiliza un modelo de inteligencia artificial para clasificar imágenes de alimentos. El proyecto incluye:
+- **Backend**: Implementado con FastAPI, sirve el modelo de clasificación.
+- **Frontend**: Una interfaz web para cargar imágenes y mostrar resultados.
+- **Despliegue**: Configuración para ejecutar los servicios en Kubernetes.
+
+---
+
+## Ejecución local
+
+### 1) Backend
+
+1. Instalar dependencias:
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+2. Ejecutar el servidor:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+El backend estará disponible en `http://localhost:8000`.
+
+### 2) Frontend
+
+1. Instalar dependencias:
+
+```bash
+cd frontend
+npm install
+```
+
+2. Ejecutar el servidor de desarrollo:
+
+```bash
+npm run dev
+```
+
+El frontend estará disponible en `http://localhost:5173`.
+
+---
+
+## Despliegue en Kubernetes
+
+### 1) Crear el namespace
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+```
+
+### 2) Desplegar el backend y el frontend
+
+```bash
+kubectl apply -f k8s/backend-deployment.yaml
+kubectl apply -f k8s/backend-service.yaml
+kubectl apply -f k8s/frontend-deployment.yaml
+kubectl apply -f k8s/frontend-service.yaml
+```
+
+### 3) Verificar los pods
+
+```bash
+kubectl get pods -n proyectotemax
+```
+
+### 4) Acceder a los servicios
+
+- **Backend**: Usar el puerto expuesto en el servicio de Kubernetes.
+- **Frontend**: Acceder a través del servicio configurado (NodePort o LoadBalancer).
+
+---
+
 ## Modelo IA: clasificación de alimentos
 
 Se implementó un modelo en `ProyectoModelo/model/model.py` para clasificar imágenes por categorías de alimentos usando PyTorch y transferencia de aprendizaje (`ResNet18`).

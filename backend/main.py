@@ -162,7 +162,7 @@ async def multipredict(files: List[UploadFile] = File(...)):
     if not files:
         raise HTTPException(status_code=400, detail="Debes enviar al menos un archivo.")
 
-    # Si no hay modelo, falla una sola vez con 503 (más claro que fallar por archivo)
+    # Si no hay modelo, falla con 503
     _ensure_model_ready()
 
     results = []
