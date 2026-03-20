@@ -1,4 +1,3 @@
-import React from "react";
 import type { MultiPredictResponse, PredictResponse } from "../api";
 
 export function ConfidenceBar({ value }: { value: number }) {
