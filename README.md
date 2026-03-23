@@ -2,31 +2,47 @@
 
 ## Descripción del Proyecto
 
-Proyecto Tema X es una aplicación web diseñada para clasificar imágenes de alimentos utilizando un modelo de aprendizaje profundo. El sistema incluye un backend desarrollado en Python con FastAPI y un frontend construido con React y TypeScript. La infraestructura está preparada para ejecutarse tanto en contenedores Docker como en un clúster de Kubernetes, lo que facilita su despliegue y escalabilidad.
+Proyecto Tema X es una aplicación web diseñada para clasificar imágenes de alimentos utilizando un modelo de aprendizaje profundo. Este proyecto tiene como objetivo principal demostrar cómo integrar un modelo de inteligencia artificial en una aplicación web moderna, proporcionando una solución completa que incluye backend, frontend e infraestructura.
+
+### Objetivos del Proyecto
+- Facilitar la clasificación de imágenes de alimentos mediante un modelo de aprendizaje profundo.
+- Proporcionar una interfaz de usuario intuitiva para interactuar con el sistema.
+- Mostrar buenas prácticas en el desarrollo de aplicaciones web con soporte para contenedores y orquestación en Kubernetes.
+- Servir como base para proyectos similares que requieran integración de IA en aplicaciones web.
+
+### Casos de Uso
+- **Educación**: Enseñar a estudiantes y desarrolladores cómo construir aplicaciones web con IA.
+- **Prototipado**: Crear prototipos rápidos para soluciones basadas en clasificación de imágenes.
+- **Demostraciones**: Mostrar capacidades de integración de IA en entornos empresariales o académicos.
+- **Extensión**: Ampliar la funcionalidad para incluir más tipos de clasificación o análisis de imágenes.
 
 ### Características Principales
 - **Backend**: Proporciona una API para la clasificación de imágenes.
 - **Frontend**: Interfaz de usuario para cargar imágenes y visualizar resultados.
 - **Infraestructura**: Configuración para Docker y Kubernetes.
 
-### Componentes Principales
+---
 
-1. **Backend**:
-   - Desarrollado con FastAPI.
-   - Proporciona una API para la clasificación de imágenes.
-   - Utiliza un modelo de aprendizaje profundo para realizar predicciones.
+## Prerrequisitos
 
-2. **Frontend**:
-   - Construido con React y TypeScript.
-   - Proporciona una interfaz de usuario para cargar imágenes y visualizar los resultados de la clasificación.
+Antes de comenzar, asegúrate de tener instalados los siguientes requisitos:
 
-3. **Infraestructura**:
-   - Configuración de Docker Compose para desarrollo local.
-   - Manifiestos de Kubernetes para despliegues en un clúster.
+- **Docker**: Para construir y ejecutar contenedores.
+- **Docker Compose**: Para orquestar los servicios localmente.
+- **Kubernetes**: Para despliegues en un clúster.
+- **kubectl**: Herramienta de línea de comandos para interactuar con Kubernetes.
 
-### Cómo Ejecutar el Proyecto
+---
 
-#### Usando Docker Compose
+## Instalación
+
+### Clonar el Repositorio
+```bash
+git clone https://github.com/usuario/ProyectoTemaX.git
+cd ProyectoTemaX
+```
+
+### Usando Docker Compose
 1. Construir las imágenes:
    ```bash
    docker-compose build
@@ -39,7 +55,21 @@ Proyecto Tema X es una aplicación web diseñada para clasificar imágenes de al
    - Backend: [http://localhost:8000](http://localhost:8000)
    - Frontend: [http://localhost:8080](http://localhost:8080)
 
-#### Usando Kubernetes
+### Usando Kubernetes
+
+Puedes utilizar el archivo `makefile` para simplificar los comandos de Kubernetes. Los objetivos disponibles incluyen:
+
+- **k8s-apply**: Aplica los manifiestos de Kubernetes.
+- **k8s-wait**: Espera a que los despliegues estén listos.
+- **pf-backend**: Reenvía el puerto del backend para pruebas locales.
+
+Ejemplo de uso:
+```bash
+make run
+```
+Esto aplicará los manifiestos, esperará a que los despliegues estén listos y reenviará el puerto del backend.
+
+Si prefieres usar los comandos manualmente:
 1. Aplicar los manifiestos:
    ```bash
    kubectl apply -f k8s/
@@ -53,18 +83,21 @@ Proyecto Tema X es una aplicación web diseñada para clasificar imágenes de al
    - Backend: Expuesto en el servicio `backend`.
    - Frontend: Expuesto en el servicio `frontend`.
 
-### Estructura del Proyecto
+---
+
+## Estructura del Proyecto
 
 - **backend/**: Contiene el código fuente del backend y el archivo `requirements.txt`.
 - **frontend/**: Contiene el código fuente del frontend y los archivos de configuración de React.
 - **k8s/**: Contiene los manifiestos de Kubernetes para el despliegue.
 - **docker-compose.yaml**: Configuración para ejecutar los servicios con Docker Compose.
 
-### Tecnologías Utilizadas
+---
+
+## Tecnologías Utilizadas
+
 - **Backend**: Python, FastAPI, PyTorch.
 - **Frontend**: React, TypeScript.
 - **Infraestructura**: Docker, Kubernetes.
 
 ---
-
-Este proyecto es un ejemplo de cómo integrar un modelo de aprendizaje profundo en una aplicación web moderna con soporte para contenedores y orquestación en Kubernetes.
