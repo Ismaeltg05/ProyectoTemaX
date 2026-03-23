@@ -1,147 +1,70 @@
-# ProyectoTemaX
+# Proyecto Tema X
 
-## Descripción general
+## Descripción del Proyecto
 
-ProyectoTemaX es una aplicación que utiliza un modelo de inteligencia artificial para clasificar imágenes de alimentos. El proyecto incluye:
-- **Backend**: Implementado con FastAPI, sirve el modelo de clasificación.
-- **Frontend**: Una interfaz web para cargar imágenes y mostrar resultados.
-- **Despliegue**: Configuración para ejecutar los servicios en Kubernetes.
+Proyecto Tema X es una aplicación web diseñada para clasificar imágenes de alimentos utilizando un modelo de aprendizaje profundo. El sistema incluye un backend desarrollado en Python con FastAPI y un frontend construido con React y TypeScript. La infraestructura está preparada para ejecutarse tanto en contenedores Docker como en un clúster de Kubernetes, lo que facilita su despliegue y escalabilidad.
 
----
+### Características Principales
+- **Backend**: Proporciona una API para la clasificación de imágenes.
+- **Frontend**: Interfaz de usuario para cargar imágenes y visualizar resultados.
+- **Infraestructura**: Configuración para Docker y Kubernetes.
 
-## Ejecución local
+### Componentes Principales
 
-### 1) Backend
+1. **Backend**:
+   - Desarrollado con FastAPI.
+   - Proporciona una API para la clasificación de imágenes.
+   - Utiliza un modelo de aprendizaje profundo para realizar predicciones.
 
-1. Instalar dependencias:
+2. **Frontend**:
+   - Construido con React y TypeScript.
+   - Proporciona una interfaz de usuario para cargar imágenes y visualizar los resultados de la clasificación.
 
-```bash
-cd backend
-pip install -r requirements.txt
-```
+3. **Infraestructura**:
+   - Configuración de Docker Compose para desarrollo local.
+   - Manifiestos de Kubernetes para despliegues en un clúster.
 
-2. Ejecutar el servidor:
+### Cómo Ejecutar el Proyecto
 
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
+#### Usando Docker Compose
+1. Construir las imágenes:
+   ```bash
+   docker-compose build
+   ```
+2. Levantar los servicios:
+   ```bash
+   docker-compose up
+   ```
+3. Acceder a la aplicación:
+   - Backend: [http://localhost:8000](http://localhost:8000)
+   - Frontend: [http://localhost:8080](http://localhost:8080)
 
-El backend estará disponible en `http://localhost:8000`.
+#### Usando Kubernetes
+1. Aplicar los manifiestos:
+   ```bash
+   kubectl apply -f k8s/
+   ```
+2. Verificar los pods y servicios:
+   ```bash
+   kubectl get pods -n proyectotemax
+   kubectl get svc -n proyectotemax
+   ```
+3. Acceder a la aplicación:
+   - Backend: Expuesto en el servicio `backend`.
+   - Frontend: Expuesto en el servicio `frontend`.
 
-### 2) Frontend
+### Estructura del Proyecto
 
-1. Instalar dependencias:
+- **backend/**: Contiene el código fuente del backend y el archivo `requirements.txt`.
+- **frontend/**: Contiene el código fuente del frontend y los archivos de configuración de React.
+- **k8s/**: Contiene los manifiestos de Kubernetes para el despliegue.
+- **docker-compose.yaml**: Configuración para ejecutar los servicios con Docker Compose.
 
-```bash
-cd frontend
-npm install
-```
-
-2. Ejecutar el servidor de desarrollo:
-
-```bash
-npm run dev
-```
-
-El frontend estará disponible en `http://localhost:5173`.
-
----
-
-## Despliegue en Kubernetes
-
-### 1) Crear el namespace
-
-```bash
-kubectl apply -f k8s/namespace.yaml
-```
-
-### 2) Desplegar el backend y el frontend
-
-```bash
-kubectl apply -f k8s/backend-deployment.yaml
-kubectl apply -f k8s/backend-service.yaml
-kubectl apply -f k8s/frontend-deployment.yaml
-kubectl apply -f k8s/frontend-service.yaml
-```
-
-### 3) Verificar los pods
-
-```bash
-kubectl get pods -n proyectotemax
-```
-
-### 4) Acceder a los servicios
-
-- **Backend**: Usar el puerto expuesto en el servicio de Kubernetes.
-- **Frontend**: Acceder a través del servicio configurado (NodePort o LoadBalancer).
+### Tecnologías Utilizadas
+- **Backend**: Python, FastAPI, PyTorch.
+- **Frontend**: React, TypeScript.
+- **Infraestructura**: Docker, Kubernetes.
 
 ---
 
-## Modelo IA: clasificación de alimentos
-
-Se implementó un modelo en `ProyectoModelo/model/model.py` para clasificar imágenes por categorías de alimentos usando PyTorch y transferencia de aprendizaje (`ResNet18`).
-
-### 1) Estructura esperada del dataset
-
-```text
-dataset/
-	train/
-		pizza/
-		sushi/
-		ensalada/
-	val/
-		pizza/
-		sushi/
-		ensalada/
-	test/
-		pizza/
-		sushi/
-		ensalada/
-```
-
-### 2) Instalar dependencias
-
-```bash
-pip install torch torchvision pillow kaggle
-```
-
-### 3) Descargar dataset de Kaggle y prepararlo automáticamente
-
-Dataset recomendado: `kmader/food41`
-
-1. Crea tu token en Kaggle: `Account` -> `Create New API Token`
-2. Guarda `kaggle.json` en `%USERPROFILE%/.kaggle/kaggle.json`
-
-Comando completo (descarga + extracción + split a train/val/test):
-
-```bash
-python ProyectoModelo/model/prepare_dataset.py --download-kaggle --kaggle-dataset kmader/food41 --raw-dir ./dataset_raw --output-dir ./dataset --train-ratio 0.7 --val-ratio 0.15 --test-ratio 0.15
-```
-
-Alternativa sin token de Kaggle (descarga desde internet con torchvision):
-
-```bash
-python ProyectoModelo/model/prepare_dataset.py --download-food101 --raw-dir ./dataset_raw --output-dir ./dataset --train-ratio 0.7 --val-ratio 0.15 --test-ratio 0.15
-```
-
-Si ya tienes imágenes locales organizadas por clase, usa:
-
-```bash
-python ProyectoModelo/model/prepare_dataset.py --source-images-root ./mis_imagenes_por_clase --output-dir ./dataset
-```
-
-### 4) Entrenar
-
-```bash
-python ProyectoModelo/model/model.py train --data-dir ./dataset --output-dir ./artifacts --epochs 10 --batch-size 32 --lr 0.001
-```
-
-Genera:
-- `artifacts/food_classifier.pth`
-- `artifacts/classes.json`
-
-### 5) Predecir una imagen
-
-```bash
-python ProyectoModelo/model/model.py predict --model-path ./artifacts/food_classifier.pth --classes-path ./artifacts/classes.json --image-path ./mi_imagen.jpg
-```
+Este proyecto es un ejemplo de cómo integrar un modelo de aprendizaje profundo en una aplicación web moderna con soporte para contenedores y orquestación en Kubernetes.

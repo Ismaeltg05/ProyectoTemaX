@@ -70,7 +70,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ismaeltg05/proyectotemax-frontend:1.0
+          image: ismaeltg/proyectotemax-frontend:1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 80

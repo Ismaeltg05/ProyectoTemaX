@@ -159,7 +159,7 @@ export default function App() {
       )}
 
       <footer className="footer muted">
-        Tip: en Docker Compose usa <span className="mono">VITE_API_BASE_URL=http://backend:8000</span>.
+        <p>Desarrollado por Ismael Torres. Proyecto de clasificación de alimentos con FastAPI y React.</p>
       </footer>
     </div>
   );

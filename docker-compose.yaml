@@ -1,17 +1,24 @@
 services:
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile.txt
+      context: ./backend
+      dockerfile: Dockerfile.txt
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
+    networks:
+      - proyecto
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.txt
       args:
-        VITE_API_BASE_URL: /api
+        VITE_API_BASE_URL: http://localhost:8000
     ports:
       - "8080:80"
+    networks:
+      - proyecto
+networks:
+  proyecto:
+    driver: bridge
